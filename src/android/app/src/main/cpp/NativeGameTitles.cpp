@@ -195,7 +195,9 @@ Java_info_cemu_cemu_nativeinterface_NativeGameTitles_setBottomBarImagePathForTit
 	NativeGameTitles::LoadGameProfile(game_title_id);
 	auto imagePath = path == nullptr ? std::optional<std::string>() : JNIUtils::FromJString(env, path);
 	NativeGameTitles::g_currentGameProfile.SetBottomBarImagePath(imagePath);
+	cemuLog_log(LogType::Force, "JNI: setBottomBarImagePathForTitle titleId=%llx, path=%s", game_title_id, imagePath ? imagePath->c_str() : "null");
 	NativeGameTitles::g_currentGameProfile.Save(game_title_id);
+	cemuLog_log(LogType::Force, "JNI: Save completed for titleId=%llx", game_title_id);
 }
 
 extern "C" [[maybe_unused]] JNIEXPORT jfloat JNICALL
