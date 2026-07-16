@@ -71,19 +71,27 @@ class BarOverlayView(
     override fun onDraw(canvas: Canvas) {
         super.onDraw(canvas)
         val localBitmap = bitmap
-        Log.d(TAG, "onDraw: visibility=$visibility, bitmap=${localBitmap != null}, alpha=${settings.bottomBarImageAlpha}, viewSize=${width}x${height}")
+        Log.d(TAG, "onDraw: visibility=$visibility, bitmap=${localBitmap != null}, viewSize=${width}x${height}")
         if (localBitmap == null) return
 
-        val alpha = (settings.bottomBarImageAlpha * 255).toInt().coerceIn(0, 255)
-        Log.d(TAG, "onDraw: drawing bitmap with alpha=$alpha, bitmapSize=${localBitmap.width}x${localBitmap.height}")
+        // Draw the full bitmap first
+        Log.d(TAG, "onDraw: drawing bitmap, bitmapSize=${localBitmap.width}x${localBitmap.height}")
+        canvas.drawBitmap(localBitmap, 0f, 0f, null)
         
-        // Clear the canvas first to ensure transparency
-        canvas.drawColor(Color.TRANSPARENT)
+        // Cut a rectangular hole in the middle to see gamepad content underneath
+        val holePadding = 0.2f // 20% padding from edges
+        val holeLeft = (width * holePadding).toInt()
+        val holeTop = (height * holePadding).toInt()
+        val holeRight = (width * (1f - holePadding)).toInt()
+        val holeBottom = (height * (1f - holePadding)).toInt()
         
-        // Draw the bitmap with the specified alpha using Paint
+        Log.d(TAG, "onDraw: cutting hole at ($holeLeft,$holeTop)-($holeRight,$holeBottom)")
+        
+        // Use PorterDuffXfermode to cut the hole
         val paint = android.graphics.Paint().apply {
-            this.alpha = alpha
+            xfermode = android.graphics.PorterDuffXfermode(android.graphics.PorterDuff.Mode.CLEAR)
         }
-        canvas.drawBitmap(localBitmap, 0f, 0f, paint)
+        canvas.drawRect(holeLeft.toFloat(), holeTop.toFloat(), holeRight.toFloat(), holeBottom.toFloat(), paint)
+        paint.xfermode = null // Reset for future draws
     }
 }
