@@ -106,12 +106,10 @@ class BarOverlayView(
     override fun onDraw(canvas: Canvas) {
         super.onDraw(canvas)
         val localBitmap = bitmap
-        Log.d(TAG, "onDraw: visibility=$visibility, bitmap=${localBitmap != null}, viewSize=${width}x${height}")
         if (localBitmap == null) return
 
         // Draw the bitmap stretched to fill the entire view
         val destRect = android.graphics.RectF(0f, 0f, width.toFloat(), height.toFloat())
-        Log.d(TAG, "onDraw: drawing bitmap stretched to ${width}x${height}")
         canvas.drawBitmap(localBitmap, null, destRect, null)
         
         // Calculate hole size based on aspect ratio difference
@@ -121,16 +119,12 @@ class BarOverlayView(
         val totalBarHeight = height - gameHeightAtFullWidth
         val barHeight = totalBarHeight / 2 // Top and bottom bars
         
-        Log.d(TAG, "onDraw: screen=${width}x${height}, gameHeightAtFullWidth=$gameHeightAtFullWidth, barHeight=$barHeight")
-        
         // Cut a rectangular hole in the middle to see gamepad content underneath
         // Shrink by 1 pixel on top and bottom only to avoid thin black lines from anti-aliasing
         val holeLeft = 0
         val holeTop = barHeight + 1
         val holeRight = width
         val holeBottom = height - barHeight - 1
-        
-        Log.d(TAG, "onDraw: cutting hole at ($holeLeft,$holeTop)-($holeRight,$holeBottom)")
         
         // Use PorterDuffXfermode to cut the hole
         val paint = android.graphics.Paint().apply {

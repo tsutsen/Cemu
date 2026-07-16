@@ -73,13 +73,7 @@ class PadPresentation(
      * Update the bar overlay settings when they change.
      */
     fun updateBarOverlaySettings(settings: BarOverlaySettings) {
-        android.util.Log.d("BarOverlay", "PadPresentation.updateBarOverlaySettings: barOverlayView=${barOverlayView != null}, settings=${settings.isBarOverlayEnabled}")
-        if (barOverlayView != null) {
-            android.util.Log.d("BarOverlay", "Calling barOverlayView.setSettings...")
-            barOverlayView!!.setSettings(settings)
-        } else {
-            android.util.Log.e("BarOverlay", "barOverlayView is null!")
-        }
+        barOverlayView?.setSettings(settings)
     }
 
     private fun computeSurfaceSize(width: Int, height: Int, rotateLeft: Boolean): Pair<Int, Int> {
