@@ -135,8 +135,6 @@ fun EmulationScreen(
         }
     }
 
-    fun log(msg: String) { Log.d("BarOverlay", msg) }
-
     fun closeDrawer() {
         scope.launch {
             drawerState.close()
