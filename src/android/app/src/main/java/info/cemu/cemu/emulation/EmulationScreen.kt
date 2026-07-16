@@ -118,29 +118,36 @@ fun EmulationScreen(
     val barImagePickerLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.GetContent()
     ) { uri ->
-        Log.d("BarOverlay", "File picker returned URI: $uri")
         if (uri != null) {
-            // Extract just the filename from the URI path segment
-            val rawFileName = uri.lastPathSegment ?: "bar_overlay.png"
-            // Replace invalid filename characters (colons, slashes, etc.)
-            val fileName = rawFileName.replace(Regex("[\\/:*?\"<>|]"), "_").trim()
-            val outputFile = java.io.File(context.filesDir, fileName)
-            Log.d("BarOverlay", "Copying file to: ${outputFile.absolutePath}")
-            try {
-                context.contentResolver.openInputStream(uri)?.use { input ->
-                    outputFile.outputStream().use { output ->
-                        input.copyTo(output)
+            val filePath = uri.path
+            val finalPath = if (filePath != null && !filePath.contains("/document/msf:")) {
+                // Regular file path
+                filePath
+            } else {
+                // SAF URI - copy to internal storage
+                val fileName = uri.lastPathSegment ?: "bar_overlay.png"
+                val outputFile = java.io.File(context.filesDir, fileName)
+                try {
+                    context.contentResolver.openInputStream(uri)?.use { input ->
+                        outputFile.outputStream().use { output ->
+                            input.copyTo(output)
+                        }
                     }
+                    outputFile.absolutePath
+                } catch (e: Exception) {
+                    Log.w("BarOverlay", "Failed to copy file: ${e.message}")
+                    null
                 }
-                Log.d("BarOverlay", "File copied successfully, size: ${outputFile.length()} bytes")
+            }
+            
+            if (finalPath != null) {
                 viewModel.saveBarOverlaySettings(
-                    barOverlaySettings.copy(bottomBarImagePath = outputFile.absolutePath)
+                    barOverlaySettings.copy(bottomBarImagePath = finalPath)
                 )
                 scope.launch {
                     snackbarHostState.showMessage(scope, tr("Bar overlay image set"))
                 }
-            } catch (e: Exception) {
-                Log.w("BarOverlay", "Failed to copy file: ${e.message}")
+            } else {
                 scope.launch {
                     snackbarHostState.showMessage(scope, tr("Failed to load image"))
                 }
@@ -449,16 +456,18 @@ private fun EmulationSideMenuContent(
                 fontSize = 14.sp,
             )
             Text(
-                text = barOverlaySettings.bottomBarImagePath ?: suggestedImagePath,
-                fontSize = 11.sp,
+                text = barOverlaySettings.bottomBarImagePath?.let { path ->
+                    java.io.File(path).name
+                } ?: tr("No image selected"),
+                fontSize = 12.sp,
                 color = androidx.compose.ui.graphics.Color.Gray,
             )
         }
-        Button(
-            onClick = onPickBarImage,
-            modifier = Modifier.align(Alignment.CenterVertically),
-        ) {
-            Text(tr("Pick"))
+        IconButton(onClick = onPickBarImage) {
+            Icon(
+                painter = painterResource(id = R.drawable.ic_add),
+                contentDescription = tr("Select bar overlay image")
+            )
         }
     }
 
@@ -634,7 +643,6 @@ private fun EmulationSurfaces(
 
     // Update bar overlay settings when they change
     LaunchedEffect(barOverlaySettings) {
-        Log.d("BarOverlay", "LaunchedEffect triggered, updating padPresentationRef with: ${barOverlaySettings.isBarOverlayEnabled}, ${barOverlaySettings.bottomBarImagePath}")
         padPresentationRef?.updateBarOverlaySettings(barOverlaySettings)
     }
 
