@@ -123,10 +123,10 @@ class BarOverlayView(
         Log.d(TAG, "onDraw: screen=${width}x${height}, gameHeightAtFullWidth=$gameHeightAtFullWidth, barHeight=$barHeight")
         
         // Cut a rectangular hole in the middle to see gamepad content underneath
-        // Shrink by 1 pixel on each side to avoid thin black lines from anti-aliasing
-        val holeLeft = 1
+        // Shrink by 1 pixel on top and bottom only to avoid thin black lines from anti-aliasing
+        val holeLeft = 0
         val holeTop = barHeight + 1
-        val holeRight = width - 1
+        val holeRight = width
         val holeBottom = height - barHeight - 1
         
         Log.d(TAG, "onDraw: cutting hole at ($holeLeft,$holeTop)-($holeRight,$holeBottom)")
