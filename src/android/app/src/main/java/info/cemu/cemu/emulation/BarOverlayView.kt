@@ -24,6 +24,8 @@ class BarOverlayView(
     private var imagePath: String? = null
 
     init {
+        // Use hardware layer caching so the view is only drawn once
+        setLayerType(View.LAYER_TYPE_HARDWARE, null)
         // Initialize with the provided settings
         setSettings(settings)
     }
