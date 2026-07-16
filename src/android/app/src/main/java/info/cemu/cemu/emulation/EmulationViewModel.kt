@@ -1,5 +1,6 @@
 package info.cemu.cemu.emulation
 
+import android.util.Log
 import android.view.SurfaceHolder
 import androidx.datastore.core.DataStore
 import androidx.lifecycle.ViewModel
@@ -160,13 +161,16 @@ class EmulationViewModel(
     }
 
     fun saveBarOverlaySettings(barOverlaySettings: BarOverlaySettings) {
+        Log.d("BarOverlay", "saveBarOverlaySettings called: enabled=${barOverlaySettings.isBarOverlayEnabled}, path=${barOverlaySettings.bottomBarImagePath}")
         viewModelScope.launch {
             _barOverlaySettings.value = barOverlaySettings
+            Log.d("BarOverlay", "_barOverlaySettings updated")
             NativeGameTitles.setBarOverlayEnabledForTitle(titleId, barOverlaySettings.isBarOverlayEnabled)
             NativeGameTitles.setTopBarImagePathForTitle(titleId, barOverlaySettings.topBarImagePath)
             NativeGameTitles.setBottomBarImagePathForTitle(titleId, barOverlaySettings.bottomBarImagePath)
             NativeGameTitles.setTopBarAlphaForTitle(titleId, barOverlaySettings.topBarImageAlpha)
             NativeGameTitles.setBottomBarAlphaForTitle(titleId, barOverlaySettings.bottomBarImageAlpha)
+            Log.d("BarOverlay", "JNI calls completed")
         }
     }
 

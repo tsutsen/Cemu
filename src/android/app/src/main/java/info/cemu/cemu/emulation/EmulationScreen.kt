@@ -114,6 +114,40 @@ fun EmulationScreen(
     // Suggested path for bar overlay images
     val suggestedImagePath = "/storage/emulated/0/Download/gradient(3).jpeg"
 
+    // File picker for bar overlay image
+    val barImagePickerLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.GetContent()
+    ) { uri ->
+        Log.d("BarOverlay", "File picker returned URI: $uri")
+        if (uri != null) {
+            // Extract just the filename from the URI path segment
+            val rawFileName = uri.lastPathSegment ?: "bar_overlay.png"
+            // Replace invalid filename characters (colons, slashes, etc.)
+            val fileName = rawFileName.replace(Regex("[\\/:*?\"<>|]"), "_").trim()
+            val outputFile = java.io.File(context.filesDir, fileName)
+            Log.d("BarOverlay", "Copying file to: ${outputFile.absolutePath}")
+            try {
+                context.contentResolver.openInputStream(uri)?.use { input ->
+                    outputFile.outputStream().use { output ->
+                        input.copyTo(output)
+                    }
+                }
+                Log.d("BarOverlay", "File copied successfully, size: ${outputFile.length()} bytes")
+                viewModel.saveBarOverlaySettings(
+                    barOverlaySettings.copy(bottomBarImagePath = outputFile.absolutePath)
+                )
+                scope.launch {
+                    snackbarHostState.showMessage(scope, tr("Bar overlay image set"))
+                }
+            } catch (e: Exception) {
+                Log.w("BarOverlay", "Failed to copy file: ${e.message}")
+                scope.launch {
+                    snackbarHostState.showMessage(scope, tr("Failed to load image"))
+                }
+            }
+        }
+    }
+
     fun log(msg: String) { Log.d("BarOverlay", msg) }
 
     fun closeDrawer() {
@@ -180,6 +214,7 @@ fun EmulationScreen(
                         barOverlaySettings = barOverlaySettings,
                         updateBarOverlaySettings = { viewModel.saveBarOverlaySettings(it) },
                         suggestedImagePath = suggestedImagePath,
+                        onPickBarImage = { barImagePickerLauncher.launch("image/*") },
                         updateState = {
                             viewModel.updateSideMenuState(it)
                             setMotionSensorEnabled(it.isMotionEnabled)
@@ -317,6 +352,7 @@ private fun EmulationSideMenuContent(
     barOverlaySettings: BarOverlaySettings,
     updateBarOverlaySettings: (BarOverlaySettings) -> Unit,
     suggestedImagePath: String,
+    onPickBarImage: () -> Unit,
     updateState: (SideMenuState) -> Unit,
     onShowEmulatedUSBDevices: () -> Unit,
     onEditInputOverlay: () -> Unit,
@@ -399,23 +435,32 @@ private fun EmulationSideMenuContent(
         onCheckedChange = { updateBarOverlaySettings(barOverlaySettings.copy(isBarOverlayEnabled = it)) },
     )
 
-    // Show instruction for setting bar image
-    Text(
-        text = tr("Place image at:"),
+    // Show instruction for setting bar image with file picker button
+    Row(
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 8.dp, vertical = 2.dp),
-        fontSize = 12.sp,
-        color = androidx.compose.ui.graphics.Color.Gray,
-    )
-    Text(
-        text = suggestedImagePath,
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 8.dp, vertical = 2.dp),
-        fontSize = 11.sp,
-        color = androidx.compose.ui.graphics.Color.Gray,
-    )
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                text = tr("Bar overlay image"),
+                fontSize = 14.sp,
+            )
+            Text(
+                text = barOverlaySettings.bottomBarImagePath ?: suggestedImagePath,
+                fontSize = 11.sp,
+                color = androidx.compose.ui.graphics.Color.Gray,
+            )
+        }
+        Button(
+            onClick = onPickBarImage,
+            modifier = Modifier.align(Alignment.CenterVertically),
+        ) {
+            Text(tr("Pick"))
+        }
+    }
 
     FloatSliderItem(
         label = tr("Bottom bar alpha"),
@@ -589,6 +634,7 @@ private fun EmulationSurfaces(
 
     // Update bar overlay settings when they change
     LaunchedEffect(barOverlaySettings) {
+        Log.d("BarOverlay", "LaunchedEffect triggered, updating padPresentationRef with: ${barOverlaySettings.isBarOverlayEnabled}, ${barOverlaySettings.bottomBarImagePath}")
         padPresentationRef?.updateBarOverlaySettings(barOverlaySettings)
     }
 
