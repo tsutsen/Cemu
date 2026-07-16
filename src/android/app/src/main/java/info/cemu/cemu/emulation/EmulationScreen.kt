@@ -118,29 +118,16 @@ fun EmulationScreen(
     val barImagePickerLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.GetContent()
     ) { uri ->
-        Log.d("BarOverlay", "File picker returned URI: $uri")
         if (uri != null) {
-            // Always copy from SAF URI to internal storage to ensure reliable access
-            val fileName = uri.lastPathSegment ?: "bar_overlay.png"
-            // Replace invalid filename characters (colons, slashes, etc.)
-            val safeFileName = fileName.replace(Regex("[\\/:*?\"<>|]"), "_").trim()
-            val outputFile = java.io.File(context.filesDir, safeFileName)
-            Log.d("BarOverlay", "Copying file to: ${outputFile.absolutePath}")
-            try {
-                context.contentResolver.openInputStream(uri)?.use { input ->
-                    outputFile.outputStream().use { output ->
-                        input.copyTo(output)
-                    }
-                }
-                Log.d("BarOverlay", "File copied successfully, size: ${outputFile.length()} bytes")
+            val copiedPath = info.cemu.cemu.common.util.BitmapLoader.copyFromUriToInternal(context, uri)
+            if (copiedPath != null) {
                 viewModel.saveBarOverlaySettings(
-                    barOverlaySettings.copy(bottomBarImagePath = outputFile.absolutePath)
+                    barOverlaySettings.copy(bottomBarImagePath = copiedPath)
                 )
                 scope.launch {
                     snackbarHostState.showMessage(scope, tr("Bar overlay image set"))
                 }
-            } catch (e: Exception) {
-                Log.w("BarOverlay", "Failed to copy file: ${e.message}")
+            } else {
                 scope.launch {
                     snackbarHostState.showMessage(scope, tr("Failed to load image"))
                 }

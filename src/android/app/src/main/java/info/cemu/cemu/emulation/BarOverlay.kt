@@ -1,8 +1,6 @@
 package info.cemu.cemu.emulation
 
 import android.graphics.Bitmap
-import android.graphics.BitmapFactory
-import android.net.Uri
 import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -22,73 +20,20 @@ import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import info.cemu.cemu.common.settings.BarOverlaySettings
-import java.io.File
+import info.cemu.cemu.common.util.BitmapLoader
 
 private const val TAG = "BarOverlay"
 
 fun log(msg: String) { Log.d(TAG, msg) }
 
 /**
- * Checks if a path is a SAF URI (Storage Access Framework).
- * SAF URIs look like: /document/msf:1000075217 or content://com.android.providers.downloads.documents/document/msf:1000075217
- */
-fun isSaferUri(path: String): Boolean {
-    return path.startsWith("/document/msf:") ||
-        path.startsWith("content://") ||
-        path.startsWith("file:///storage/")
-}
-
-/**
- * Loads a bitmap from a file path or SAF URI.
+ * Composable that remembers a bitmap loaded from a file path or SAF URI.
  */
 @Composable
 fun rememberBarOverlayBitmap(imagePath: String?): Bitmap? {
     val context = LocalContext.current
     return remember(imagePath) {
-        if (imagePath.isNullOrEmpty()) {
-            log("Bitmap load skipped: path is null or empty")
-            return@remember null
-        }
-        log("Loading bitmap from: $imagePath")
-
-        try {
-            // Handle SAF URIs
-            if (isSaferUri(imagePath)) {
-                log("  -> Detected SAF URI, opening via ContentResolver")
-                val uri = Uri.parse(imagePath)
-                context.contentResolver.openInputStream(uri)?.use { input ->
-                    val bitmap = BitmapFactory.decodeStream(input)
-                    if (bitmap != null) {
-                        log("  -> Bitmap loaded from SAF URI: ${bitmap.width}x${bitmap.height}")
-                    } else {
-                        log("  -> Bitmap decode from SAF URI returned null")
-                    }
-                    bitmap
-                }?.also {
-                    if (it == null) {
-                        log("  -> Failed to open input stream for SAF URI")
-                    }
-                }
-            } else {
-                // Handle regular file paths
-                val file = File(imagePath)
-                if (!file.exists()) {
-                    log("  -> Bitmap file not found: $imagePath")
-                    return@remember null
-                }
-                log("  -> File exists, size: ${file.length()} bytes")
-                val bitmap = BitmapFactory.decodeFile(file.absolutePath)
-                if (bitmap != null) {
-                    log("  -> Bitmap loaded: ${bitmap.width}x${bitmap.height}")
-                } else {
-                    log("  -> Bitmap decode returned null")
-                }
-                bitmap
-            }
-        } catch (e: Exception) {
-            log("  -> Failed to load bar overlay image: $imagePath - ${e.message}")
-            null
-        }
+        BitmapLoader.loadFromPath(context, imagePath)
     }
 }
 
