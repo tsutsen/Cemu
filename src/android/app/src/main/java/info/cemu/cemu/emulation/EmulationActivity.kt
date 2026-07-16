@@ -26,6 +26,7 @@ import info.cemu.cemu.emulation.input.DeviceMotionHandler
 import info.cemu.cemu.emulation.input.HotkeyManager
 import info.cemu.cemu.emulation.input.InputHandler
 import info.cemu.cemu.emulation.input.NativeInputDeviceListener
+import info.cemu.cemu.nativeinterface.NativeEmulation
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
@@ -127,12 +128,14 @@ class EmulationActivity : AppCompatActivity() {
         setFullscreen()
 
         val gamePath = getGamePath()
+        val titleId = NativeEmulation.getTitleIdFromPath(gamePath)
 
         setContent {
             TranslatableContent {
                 ActivityContent {
                     EmulationScreen(
                         gamePath = gamePath,
+                        titleId = titleId,
                         setMotionSensorEnabled = inputManager::setDeviceMotionEnabled,
                         onQuit = ::onQuit,
                         setInputListeningEnabled = { processInputEvents = it },

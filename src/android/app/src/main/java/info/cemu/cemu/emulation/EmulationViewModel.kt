@@ -16,11 +16,13 @@ import info.cemu.cemu.common.either.bind
 import info.cemu.cemu.common.either.mapError
 import info.cemu.cemu.common.settings.AppSettings
 import info.cemu.cemu.common.settings.AppSettingsStore
+import info.cemu.cemu.common.settings.BarOverlaySettings
 import info.cemu.cemu.common.settings.InputOverlayRect
 import info.cemu.cemu.common.settings.InputOverlaySettings
 import info.cemu.cemu.common.settings.OverlayInputConfig
 import info.cemu.cemu.nativeinterface.NativeEmulation
 import info.cemu.cemu.nativeinterface.NativeEmulation.PrepareTitleResult
+import info.cemu.cemu.nativeinterface.NativeGameTitles
 import info.cemu.cemu.nativeinterface.NativeException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -76,6 +78,7 @@ data class SurfaceDimensions(val width: Int = 1, val height: Int = 1)
 
 class EmulationViewModel(
     private val launchPath: String,
+    private val titleId: Long,
     private val dataStore: DataStore<AppSettings> = AppSettingsStore.dataStore
 ) : ViewModel() {
     private val _emulationError = MutableStateFlow<NativeError?>(null)
@@ -98,6 +101,10 @@ class EmulationViewModel(
                 false,
             )
 
+    // Per-game bar overlay settings loaded from NativeGameTitles
+    private val _barOverlaySettings = MutableStateFlow(loadBarOverlaySettings())
+    val barOverlaySettings = _barOverlaySettings.asStateFlow()
+
     init {
         viewModelScope.launch {
             val settings = dataStore.data.first()
@@ -110,6 +117,29 @@ class EmulationViewModel(
                 )
             }
         }
+    }
+
+    private fun loadBarOverlaySettings(): BarOverlaySettings {
+        val bottomBarPath = NativeGameTitles.getBottomBarImagePathForTitle(titleId)
+        val topBarPath = NativeGameTitles.getTopBarImagePathForTitle(titleId)
+        // Use hardcoded path as default if no path is saved in game profile
+        val effectiveBottomPath = if (bottomBarPath.isNullOrEmpty() || bottomBarPath.contains("/document/msf:")) {
+            "/storage/emulated/0/Download/gradient(3).jpeg"
+        } else {
+            bottomBarPath
+        }
+        val effectiveTopPath = if (topBarPath.isNullOrEmpty() || topBarPath.contains("/document/msf:")) {
+            null
+        } else {
+            topBarPath
+        }
+        return BarOverlaySettings(
+            isBarOverlayEnabled = NativeGameTitles.isBarOverlayEnabledForTitle(titleId),
+            topBarImagePath = effectiveTopPath,
+            bottomBarImagePath = effectiveBottomPath,
+            topBarImageAlpha = NativeGameTitles.getTopBarAlphaForTitle(titleId),
+            bottomBarImageAlpha = NativeGameTitles.getBottomBarAlphaForTitle(titleId),
+        )
     }
 
     val inputOverlaySettings = dataStore.data.map { it.inputOverlaySettings }.stateIn(
@@ -126,6 +156,17 @@ class EmulationViewModel(
 
                 it.copy(inputOverlaySettings = overlaySettings)
             }
+        }
+    }
+
+    fun saveBarOverlaySettings(barOverlaySettings: BarOverlaySettings) {
+        viewModelScope.launch {
+            _barOverlaySettings.value = barOverlaySettings
+            NativeGameTitles.setBarOverlayEnabledForTitle(titleId, barOverlaySettings.isBarOverlayEnabled)
+            NativeGameTitles.setTopBarImagePathForTitle(titleId, barOverlaySettings.topBarImagePath)
+            NativeGameTitles.setBottomBarImagePathForTitle(titleId, barOverlaySettings.bottomBarImagePath)
+            NativeGameTitles.setTopBarAlphaForTitle(titleId, barOverlaySettings.topBarImageAlpha)
+            NativeGameTitles.setBottomBarAlphaForTitle(titleId, barOverlaySettings.bottomBarImageAlpha)
         }
     }
 
@@ -291,10 +332,12 @@ class EmulationViewModel(
 
     companion object {
         val LAUNCH_PATH_KEY = object : CreationExtras.Key<String> {}
+        val TITLE_ID_KEY = object : CreationExtras.Key<Long> {}
         val Factory: ViewModelProvider.Factory = viewModelFactory {
             initializer {
                 EmulationViewModel(
-                    this[LAUNCH_PATH_KEY] as String
+                    launchPath = this[LAUNCH_PATH_KEY] as String,
+                    titleId = this[TITLE_ID_KEY] as Long,
                 )
             }
         }

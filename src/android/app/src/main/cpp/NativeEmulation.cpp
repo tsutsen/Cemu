@@ -286,6 +286,14 @@ Java_info_cemu_cemu_nativeinterface_NativeEmulation_supportsLoadingCustomDriver(
 	return SupportsLoadingCustomDriver();
 }
 
+extern "C" [[maybe_unused]] JNIEXPORT jlong JNICALL
+Java_info_cemu_cemu_nativeinterface_NativeEmulation_getTitleIdFromPath([[maybe_unused]] JNIEnv* env, [[maybe_unused]] jclass clazz, jstring launchPathJava)
+{
+	fs::path launchPath = JNIUtils::FromJString(env, launchPathJava);
+	TitleInfo launchTitle{launchPath};
+	return static_cast<jlong>(launchTitle.GetAppTitleId());
+}
+
 extern "C" [[maybe_unused]] JNIEXPORT void JNICALL
 Java_info_cemu_cemu_nativeinterface_NativeEmulation_setSurface(JNIEnv* env, [[maybe_unused]] jclass clazz, jobject surface, jboolean isMainCanvas)
 {

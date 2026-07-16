@@ -17,6 +17,7 @@ data class EmulationSettings(
     val isPadVisible: Boolean = false,
     val isPadOnExternalDisplay: Boolean = false,
     val isExternalScreenRotatedLeft: Boolean = false,
+    val isBarOverlayEnabled: Boolean = false,
 )
 
 @Serializable
@@ -63,6 +64,16 @@ data class AppSettings(
     val storageSettings: StorageSettings = StorageSettings(),
     val inputOverlaySettings: InputOverlaySettings = InputOverlaySettings(),
     val hotkeySettings: Map<HotkeyAction, HotkeyCombo> = emptyMap(),
+    val barOverlaySettings: BarOverlaySettings = BarOverlaySettings(),
+)
+
+@Serializable
+data class BarOverlaySettings(
+    val isBarOverlayEnabled: Boolean = false,
+    val topBarImagePath: String? = null,
+    val bottomBarImagePath: String? = null,
+    val topBarImageAlpha: Float = 1.0f,
+    val bottomBarImageAlpha: Float = 1.0f,
 )
 
 object AppSettingsSerializer : Serializer<AppSettings> {

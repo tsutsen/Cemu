@@ -76,6 +76,37 @@ object NativeGameTitles {
     @JvmStatic
     external fun setDriverSettingForTitle(gameTitleId: Long, driverSetting: DriverSetting)
 
+    // Bar overlay settings (top and bottom only - Wii U TV is 16:9, displayed on 4:3 screen)
+    @JvmStatic
+    external fun isBarOverlayEnabledForTitle(gameTitleId: Long): Boolean
+
+    @JvmStatic
+    external fun setBarOverlayEnabledForTitle(gameTitleId: Long, enabled: Boolean)
+
+    @JvmStatic
+    external fun getTopBarImagePathForTitle(gameTitleId: Long): String?
+
+    @JvmStatic
+    external fun setTopBarImagePathForTitle(gameTitleId: Long, path: String?)
+
+    @JvmStatic
+    external fun getBottomBarImagePathForTitle(gameTitleId: Long): String?
+
+    @JvmStatic
+    external fun setBottomBarImagePathForTitle(gameTitleId: Long, path: String?)
+
+    @JvmStatic
+    external fun getTopBarAlphaForTitle(gameTitleId: Long): Float
+
+    @JvmStatic
+    external fun setTopBarAlphaForTitle(gameTitleId: Long, alpha: Float)
+
+    @JvmStatic
+    external fun getBottomBarAlphaForTitle(gameTitleId: Long): Float
+
+    @JvmStatic
+    external fun setBottomBarAlphaForTitle(gameTitleId: Long, alpha: Float)
+
     @JvmStatic
     external fun titleHasShaderCacheFiles(gameTitleId: Long): Boolean
 

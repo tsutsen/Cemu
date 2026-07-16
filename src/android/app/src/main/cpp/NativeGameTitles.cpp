@@ -148,6 +148,86 @@ Java_info_cemu_cemu_nativeinterface_NativeGameTitles_setDriverSettingForTitle([[
 	NativeGameTitles::g_currentGameProfile.Save(game_title_id);
 }
 
+// Bar overlay settings
+extern "C" [[maybe_unused]] JNIEXPORT jboolean JNICALL
+Java_info_cemu_cemu_nativeinterface_NativeGameTitles_isBarOverlayEnabledForTitle([[maybe_unused]] JNIEnv* env, [[maybe_unused]] jclass clazz, jlong game_title_id)
+{
+	NativeGameTitles::LoadGameProfile(game_title_id);
+	return NativeGameTitles::g_currentGameProfile.GetBarOverlayEnabled();
+}
+
+extern "C" [[maybe_unused]] JNIEXPORT void JNICALL
+Java_info_cemu_cemu_nativeinterface_NativeGameTitles_setBarOverlayEnabledForTitle([[maybe_unused]] JNIEnv* env, [[maybe_unused]] jclass clazz, jlong game_title_id, jboolean enabled)
+{
+	NativeGameTitles::LoadGameProfile(game_title_id);
+	NativeGameTitles::g_currentGameProfile.SetBarOverlayEnabled(enabled);
+	NativeGameTitles::g_currentGameProfile.Save(game_title_id);
+}
+
+extern "C" [[maybe_unused]] JNIEXPORT jstring JNICALL
+Java_info_cemu_cemu_nativeinterface_NativeGameTitles_getTopBarImagePathForTitle(JNIEnv* env, [[maybe_unused]] jclass clazz, jlong game_title_id)
+{
+	NativeGameTitles::LoadGameProfile(game_title_id);
+	auto path = NativeGameTitles::g_currentGameProfile.GetTopBarImagePath();
+	return path.has_value() ? env->NewStringUTF(path.value().c_str()) : nullptr;
+}
+
+extern "C" [[maybe_unused]] JNIEXPORT void JNICALL
+Java_info_cemu_cemu_nativeinterface_NativeGameTitles_setTopBarImagePathForTitle([[maybe_unused]] JNIEnv* env, [[maybe_unused]] jclass clazz, jlong game_title_id, jstring path)
+{
+	NativeGameTitles::LoadGameProfile(game_title_id);
+	auto imagePath = path == nullptr ? std::optional<std::string>() : JNIUtils::FromJString(env, path);
+	NativeGameTitles::g_currentGameProfile.SetTopBarImagePath(imagePath);
+	NativeGameTitles::g_currentGameProfile.Save(game_title_id);
+}
+
+extern "C" [[maybe_unused]] JNIEXPORT jstring JNICALL
+Java_info_cemu_cemu_nativeinterface_NativeGameTitles_getBottomBarImagePathForTitle(JNIEnv* env, [[maybe_unused]] jclass clazz, jlong game_title_id)
+{
+	NativeGameTitles::LoadGameProfile(game_title_id);
+	auto path = NativeGameTitles::g_currentGameProfile.GetBottomBarImagePath();
+	return path.has_value() ? env->NewStringUTF(path.value().c_str()) : nullptr;
+}
+
+extern "C" [[maybe_unused]] JNIEXPORT void JNICALL
+Java_info_cemu_cemu_nativeinterface_NativeGameTitles_setBottomBarImagePathForTitle([[maybe_unused]] JNIEnv* env, [[maybe_unused]] jclass clazz, jlong game_title_id, jstring path)
+{
+	NativeGameTitles::LoadGameProfile(game_title_id);
+	auto imagePath = path == nullptr ? std::optional<std::string>() : JNIUtils::FromJString(env, path);
+	NativeGameTitles::g_currentGameProfile.SetBottomBarImagePath(imagePath);
+	NativeGameTitles::g_currentGameProfile.Save(game_title_id);
+}
+
+extern "C" [[maybe_unused]] JNIEXPORT jfloat JNICALL
+Java_info_cemu_cemu_nativeinterface_NativeGameTitles_getTopBarAlphaForTitle([[maybe_unused]] JNIEnv* env, [[maybe_unused]] jclass clazz, jlong game_title_id)
+{
+	NativeGameTitles::LoadGameProfile(game_title_id);
+	return static_cast<jfloat>(NativeGameTitles::g_currentGameProfile.GetTopBarAlpha());
+}
+
+extern "C" [[maybe_unused]] JNIEXPORT void JNICALL
+Java_info_cemu_cemu_nativeinterface_NativeGameTitles_setTopBarAlphaForTitle([[maybe_unused]] JNIEnv* env, [[maybe_unused]] jclass clazz, jlong game_title_id, jfloat alpha)
+{
+	NativeGameTitles::LoadGameProfile(game_title_id);
+	NativeGameTitles::g_currentGameProfile.SetTopBarAlpha(alpha);
+	NativeGameTitles::g_currentGameProfile.Save(game_title_id);
+}
+
+extern "C" [[maybe_unused]] JNIEXPORT jfloat JNICALL
+Java_info_cemu_cemu_nativeinterface_NativeGameTitles_getBottomBarAlphaForTitle([[maybe_unused]] JNIEnv* env, [[maybe_unused]] jclass clazz, jlong game_title_id)
+{
+	NativeGameTitles::LoadGameProfile(game_title_id);
+	return static_cast<jfloat>(NativeGameTitles::g_currentGameProfile.GetBottomBarAlpha());
+}
+
+extern "C" [[maybe_unused]] JNIEXPORT void JNICALL
+Java_info_cemu_cemu_nativeinterface_NativeGameTitles_setBottomBarAlphaForTitle([[maybe_unused]] JNIEnv* env, [[maybe_unused]] jclass clazz, jlong game_title_id, jfloat alpha)
+{
+	NativeGameTitles::LoadGameProfile(game_title_id);
+	NativeGameTitles::g_currentGameProfile.SetBottomBarAlpha(alpha);
+	NativeGameTitles::g_currentGameProfile.Save(game_title_id);
+}
+
 extern "C" [[maybe_unused]] JNIEXPORT jboolean JNICALL
 Java_info_cemu_cemu_nativeinterface_NativeGameTitles_titleHasShaderCacheFiles([[maybe_unused]] JNIEnv* env, [[maybe_unused]] jclass clazz, jlong game_title_id)
 {

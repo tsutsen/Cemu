@@ -7,7 +7,9 @@ import android.view.Display
 import android.view.SurfaceHolder
 import android.view.SurfaceView
 import android.view.ViewGroup
+import android.widget.FrameLayout
 import android.view.WindowManager
+import info.cemu.cemu.common.settings.BarOverlaySettings
 
 class PadPresentation(
     context: Context,
@@ -15,7 +17,10 @@ class PadPresentation(
     private val rotateLeft: Boolean,
     private val holderCallback: SurfaceHolder.Callback,
     private val touchListener: CanvasOnTouchListener,
+    private val barOverlaySettings: BarOverlaySettings,
 ) : Presentation(context, display) {
+    private var barOverlayView: BarOverlayView? = null
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
@@ -31,18 +36,44 @@ class PadPresentation(
             rotateLeft = rotateLeft,
         )
 
-        val surfaceView = SurfaceView(context).apply {
-            layoutParams = ViewGroup.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT,
-                ViewGroup.LayoutParams.MATCH_PARENT,
+        // Create a FrameLayout to hold both the SurfaceView and the bar overlay
+        val frameLayout = FrameLayout(context).apply {
+            layoutParams = FrameLayout.LayoutParams(
+                FrameLayout.LayoutParams.MATCH_PARENT,
+                FrameLayout.LayoutParams.MATCH_PARENT,
             )
+        }
 
+        val surfaceView = SurfaceView(context).apply {
+            layoutParams = FrameLayout.LayoutParams(
+                FrameLayout.LayoutParams.MATCH_PARENT,
+                FrameLayout.LayoutParams.MATCH_PARENT,
+            )
             holder.setFixedSize(surfaceWidth, surfaceHeight)
             holder.addCallback(holderCallback)
             setOnTouchListener(touchListener)
         }
 
-        setContentView(surfaceView)
+        // Create the bar overlay view
+        barOverlayView = BarOverlayView(context, barOverlaySettings).apply {
+            layoutParams = FrameLayout.LayoutParams(
+                FrameLayout.LayoutParams.MATCH_PARENT,
+                FrameLayout.LayoutParams.MATCH_PARENT,
+            )
+        }
+
+        // Add both views to the frame layout
+        frameLayout.addView(surfaceView)
+        frameLayout.addView(barOverlayView)
+
+        setContentView(frameLayout)
+    }
+
+    /**
+     * Update the bar overlay settings when they change.
+     */
+    fun updateBarOverlaySettings(settings: BarOverlaySettings) {
+        barOverlayView?.setSettings(settings)
     }
 
     private fun computeSurfaceSize(width: Int, height: Int, rotateLeft: Boolean): Pair<Int, Int> {

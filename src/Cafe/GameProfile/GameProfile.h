@@ -65,10 +65,24 @@ public:
 		m_driverSetting = driverSetting;
 	}
 
-  private:
-	DriverSetting m_driverSetting;
-
 #endif
+
+  public:
+	// Bar overlay settings (Android) - top and bottom bars only (Wii U TV is 16:9, displayed on 4:3 screen)
+	[[nodiscard]] bool GetBarOverlayEnabled() const { return m_barOverlayEnabled; }
+	void SetBarOverlayEnabled(bool enabled) { m_barOverlayEnabled = enabled; }
+
+	[[nodiscard]] const std::optional<std::string>& GetTopBarImagePath() const { return m_topBarImagePath; }
+	void SetTopBarImagePath(const std::optional<std::string>& path) { m_topBarImagePath = path; }
+
+	[[nodiscard]] const std::optional<std::string>& GetBottomBarImagePath() const { return m_bottomBarImagePath; }
+	void SetBottomBarImagePath(const std::optional<std::string>& path) { m_bottomBarImagePath = path; }
+
+	[[nodiscard]] float GetTopBarAlpha() const { return m_topBarAlpha; }
+	void SetTopBarAlpha(float alpha) { m_topBarAlpha = alpha; }
+
+	[[nodiscard]] float GetBottomBarAlpha() const { return m_bottomBarAlpha; }
+	void SetBottomBarAlpha(float alpha) { m_bottomBarAlpha = alpha; }
 
   private:
 	uint64_t m_title_id = 0;
@@ -97,6 +111,17 @@ public:
 	bool m_disableAudio = false;
 	// controller settings
 	std::array< std::optional<std::string>, 8> m_controllerProfile{};
+
+#if BOOST_PLAT_ANDROID
+	DriverSetting m_driverSetting;
+
+	// bar overlay settings (top and bottom bars only - Wii U TV is 16:9, displayed on 4:3 screen)
+	bool m_barOverlayEnabled = false;
+	std::optional<std::string> m_topBarImagePath{};
+	std::optional<std::string> m_bottomBarImagePath{};
+	float m_topBarAlpha = 1.0f;
+	float m_bottomBarAlpha = 1.0f;
+#endif
 };
 extern std::unique_ptr<GameProfile> g_current_game_profile;
 

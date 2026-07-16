@@ -286,6 +286,22 @@ bool GameProfile::Load(uint64_t title_id)
 			}
 		}
 #endif
+		else if (boost::iequals(iniParser.GetCurrentSectionName(), "BarOverlay"))
+		{
+			gameProfile_loadBooleanOption2(iniParser, "enabled", m_barOverlayEnabled);
+
+			auto topBarPath = iniParser.FindOption("topBarImagePath");
+			if (topBarPath) m_topBarImagePath = std::string(*topBarPath);
+
+			auto bottomBarPath = iniParser.FindOption("bottomBarImagePath");
+			if (bottomBarPath) m_bottomBarImagePath = std::string(*bottomBarPath);
+
+			auto topBarAlpha = iniParser.FindOption("topBarAlpha");
+			if (topBarAlpha) m_topBarAlpha = std::stof(std::string(*topBarAlpha));
+
+			auto bottomBarAlpha = iniParser.FindOption("bottomBarAlpha");
+			if (bottomBarAlpha) m_bottomBarAlpha = std::stof(std::string(*bottomBarAlpha));
+		}
 	}
 	return true;
 }
@@ -345,6 +361,16 @@ void GameProfile::Save(uint64_t title_id)
 	fs->writeLine(fmt::format("{} = {}", "mode", m_driverSetting.mode).c_str());
 	if (m_driverSetting.mode == DriverSettingMode::Custom && m_driverSetting.customPath.has_value())
 		fs->writeLine(fmt::format("{} = {}", "customPath", m_driverSetting.customPath.value()).c_str());
+	fs->writeLine("");
+
+	fs->writeLine("[BarOverlay]");
+	fs->writeLine(fmt::format("{} = {}", "enabled", m_barOverlayEnabled ? "true" : "false").c_str());
+	if (m_topBarImagePath)
+		fs->writeLine(fmt::format("{} = {}", "topBarImagePath", m_topBarImagePath.value()).c_str());
+	if (m_bottomBarImagePath)
+		fs->writeLine(fmt::format("{} = {}", "bottomBarImagePath", m_bottomBarImagePath.value()).c_str());
+	fs->writeLine(fmt::format("{} = {}", "topBarAlpha", m_topBarAlpha).c_str());
+	fs->writeLine(fmt::format("{} = {}", "bottomBarAlpha", m_bottomBarAlpha).c_str());
 	fs->writeLine("");
 #endif
 

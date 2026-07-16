@@ -3,11 +3,14 @@ package info.cemu.cemu.emulation
 import android.annotation.SuppressLint
 import android.app.Activity
 import android.content.Context
+import android.util.Log
 import android.hardware.display.DisplayManager
 import android.view.Display
 import android.view.SurfaceHolder
 import android.view.SurfaceView
 import androidx.activity.compose.BackHandler
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -23,12 +26,14 @@ import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.Slider as MaterialSlider
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.FilledIconButton
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.ModalDrawerSheet
 import androidx.compose.material3.ModalNavigationDrawer
@@ -63,6 +68,7 @@ import androidx.lifecycle.viewmodel.MutableCreationExtras
 import androidx.lifecycle.viewmodel.compose.viewModel
 import info.cemu.cemu.R
 import info.cemu.cemu.common.android.display.DisplayUtils
+import info.cemu.cemu.common.settings.BarOverlaySettings
 import info.cemu.cemu.common.settings.GamePadPosition
 import info.cemu.cemu.common.settings.HotkeyAction
 import info.cemu.cemu.common.ui.extensions.showMessage
@@ -80,12 +86,14 @@ import kotlinx.coroutines.launch
 @Composable
 fun EmulationScreen(
     gamePath: String,
+    titleId: Long,
     setMotionSensorEnabled: (Boolean) -> Unit,
     setInputListeningEnabled: (Boolean) -> Unit,
     onQuit: () -> Unit,
     viewModel: EmulationViewModel = viewModel(
         factory = EmulationViewModel.Factory, extras = MutableCreationExtras().apply {
             set(EmulationViewModel.LAUNCH_PATH_KEY, gamePath)
+            set(EmulationViewModel.TITLE_ID_KEY, titleId)
         }),
 ) {
     val snackbarHostState = remember { SnackbarHostState() }
@@ -100,7 +108,13 @@ fun EmulationScreen(
     val sideMenuState by viewModel.sideMenuState.collectAsState()
     val isInputOverlayVisible by viewModel.isInputOverlayVisible.collectAsState()
     val inputOverlaySettings by viewModel.inputOverlaySettings.collectAsState()
+    val barOverlaySettings by viewModel.barOverlaySettings.collectAsState()
+    val context = LocalContext.current
 
+    // Suggested path for bar overlay images
+    val suggestedImagePath = "/storage/emulated/0/Download/gradient(3).jpeg"
+
+    fun log(msg: String) { Log.d("BarOverlay", msg) }
 
     fun closeDrawer() {
         scope.launch {
@@ -163,6 +177,9 @@ fun EmulationScreen(
                 ) {
                     EmulationSideMenuContent(
                         sideMenuState = sideMenuState,
+                        barOverlaySettings = barOverlaySettings,
+                        updateBarOverlaySettings = { viewModel.saveBarOverlaySettings(it) },
+                        suggestedImagePath = suggestedImagePath,
                         updateState = {
                             viewModel.updateSideMenuState(it)
                             setMotionSensorEnabled(it.isMotionEnabled)
@@ -194,6 +211,7 @@ fun EmulationScreen(
         EmulationSurfaces(
             viewModel = viewModel,
             isEmulationInitialized = isEmulationInitialized,
+            barOverlaySettings = barOverlaySettings,
         )
 
         InputOverlaySurface(
@@ -296,6 +314,9 @@ private fun EditInputsLayout(
 @Composable
 private fun EmulationSideMenuContent(
     sideMenuState: SideMenuState,
+    barOverlaySettings: BarOverlaySettings,
+    updateBarOverlaySettings: (BarOverlaySettings) -> Unit,
+    suggestedImagePath: String,
     updateState: (SideMenuState) -> Unit,
     onShowEmulatedUSBDevices: () -> Unit,
     onEditInputOverlay: () -> Unit,
@@ -363,6 +384,46 @@ private fun EmulationSideMenuContent(
         onClick = onResetInputOverlay,
     )
 
+    // Bar overlay section
+    Text(
+        text = tr("Bar Overlay"),
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 8.dp, vertical = 8.dp),
+        fontSize = 18.sp,
+    )
+
+    CheckboxItem(
+        label = tr("Enable bar overlay (bottom screen)"),
+        checked = barOverlaySettings.isBarOverlayEnabled,
+        onCheckedChange = { updateBarOverlaySettings(barOverlaySettings.copy(isBarOverlayEnabled = it)) },
+    )
+
+    // Show instruction for setting bar image
+    Text(
+        text = tr("Place image at:"),
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 8.dp, vertical = 2.dp),
+        fontSize = 12.sp,
+        color = androidx.compose.ui.graphics.Color.Gray,
+    )
+    Text(
+        text = suggestedImagePath,
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 8.dp, vertical = 2.dp),
+        fontSize = 11.sp,
+        color = androidx.compose.ui.graphics.Color.Gray,
+    )
+
+    FloatSliderItem(
+        label = tr("Bottom bar alpha"),
+        value = barOverlaySettings.bottomBarImageAlpha,
+        onValueChange = { updateBarOverlaySettings(barOverlaySettings.copy(bottomBarImageAlpha = it)) },
+        valueLabel = { "%.0f%%".format(it * 100) },
+    )
+
     TextButtonItem(
         label = tr("Exit"),
         onClick = onQuit,
@@ -420,9 +481,47 @@ private fun TextButtonItem(
 }
 
 @Composable
+private fun FloatSliderItem(
+    label: String,
+    value: Float,
+    onValueChange: (Float) -> Unit,
+    valueLabel: (Float) -> String,
+    enabled: Boolean = true,
+) {
+    val interactionSource = androidx.compose.foundation.interaction.MutableInteractionSource()
+
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .alpha(if (enabled) 1f else 0.6f)
+            .clickable(enabled = enabled, interactionSource = interactionSource) { /* no-op for focus */ }
+            .padding(8.dp)
+    ) {
+        Text(
+            text = label,
+            fontWeight = androidx.compose.ui.text.font.FontWeight.Medium,
+            fontSize = 16.sp,
+        )
+        Text(
+            text = valueLabel(value),
+            fontWeight = androidx.compose.ui.text.font.FontWeight.Light,
+            fontSize = 14.sp,
+        )
+        MaterialSlider(
+            value = value,
+            valueRange = 0f..1f,
+            enabled = enabled,
+            onValueChange = onValueChange,
+            interactionSource = interactionSource,
+        )
+    }
+}
+
+@Composable
 private fun EmulationSurfaces(
     viewModel: EmulationViewModel,
     isEmulationInitialized: Boolean,
+    barOverlaySettings: BarOverlaySettings,
 ) {
     val context = LocalContext.current
     val activity = context as? Activity
@@ -461,7 +560,10 @@ private fun EmulationSurfaces(
         )
     }
 
-    DisposableEffect(activity, padDisplay, usePadPresentation, sideMenuState.isExternalScreenRotatedLeft) {
+    // Store reference to pad presentation for updating bar overlay settings
+    var padPresentationRef by remember { mutableStateOf<PadPresentation?>(null) }
+
+    DisposableEffect(activity, padDisplay, usePadPresentation, sideMenuState.isExternalScreenRotatedLeft, barOverlaySettings) {
         val activityNonNull = activity ?: return@DisposableEffect onDispose {}
         if (!usePadPresentation) {
             return@DisposableEffect onDispose {}
@@ -476,11 +578,18 @@ private fun EmulationSurfaces(
             rotateLeft = sideMenuState.isExternalScreenRotatedLeft,
             holderCallback = viewModel.padHolderCallback,
             touchListener = padPresentationTouchListener,
+            barOverlaySettings = barOverlaySettings,
         )
 
+        padPresentationRef = padPresentation
         padPresentation.show()
 
         onDispose { padPresentation.dismiss() }
+    }
+
+    // Update bar overlay settings when they change
+    LaunchedEffect(barOverlaySettings) {
+        padPresentationRef?.updateBarOverlaySettings(barOverlaySettings)
     }
 
     LinearLayout(currentGamePadPosition) { itemModifier ->
