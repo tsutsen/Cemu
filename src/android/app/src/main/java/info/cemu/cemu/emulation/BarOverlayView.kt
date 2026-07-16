@@ -3,6 +3,9 @@ package info.cemu.cemu.emulation
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.Canvas
+import android.graphics.PorterDuff
+import android.graphics.PorterDuffXfermode
+import android.graphics.Paint
 import android.view.View
 import info.cemu.cemu.common.settings.BarOverlaySettings
 import info.cemu.cemu.common.util.BitmapLoader
@@ -59,19 +62,22 @@ class BarOverlayView(
         val totalBarHeight = height - gameHeightAtFullWidth
         val barHeight = totalBarHeight / 2 // Top and bottom bars
         
-        // Draw only the top and bottom bar portions (avoid drawing the middle area)
+        // Draw the full bitmap stretched to fill the entire view
+        val destRect = android.graphics.RectF(0f, 0f, width.toFloat(), height.toFloat())
+        canvas.drawBitmap(localBitmap, null, destRect, null)
+        
+        // Cut a rectangular hole in the middle to see gamepad content underneath
         // Shrink by 1px on top/bottom edges to avoid thin black lines from anti-aliasing
-        if (barHeight > 1) {
-            val shrink = 1
-            // Top bar (draw from y=0 to y=barHeight-shrink)
-            val topSrcRect = android.graphics.Rect(0, 0, localBitmap.width, ((barHeight - shrink).toFloat() / height * localBitmap.height).toInt())
-            val topDestRect = android.graphics.RectF(0f, 0f, width.toFloat(), (barHeight - shrink).toFloat())
-            canvas.drawBitmap(localBitmap, topSrcRect, topDestRect, null)
-            
-            // Bottom bar (draw from y=height-barHeight+shrink to y=height)
-            val bottomSrcRect = android.graphics.Rect(0, localBitmap.height - ((barHeight - shrink).toFloat() / height * localBitmap.height).toInt(), localBitmap.width, localBitmap.height)
-            val bottomDestRect = android.graphics.RectF(0f, height.toFloat() - (barHeight - shrink).toFloat(), width.toFloat(), height.toFloat())
-            canvas.drawBitmap(localBitmap, bottomSrcRect, bottomDestRect, null)
+        val holeLeft = 0
+        val holeTop = barHeight + 1
+        val holeRight = width
+        val holeBottom = height - barHeight - 1
+        
+        // Use PorterDuffXfermode to cut the hole
+        val paint = Paint().apply {
+            xfermode = PorterDuffXfermode(PorterDuff.Mode.CLEAR)
         }
+        canvas.drawRect(holeLeft.toFloat(), holeTop.toFloat(), holeRight.toFloat(), holeBottom.toFloat(), paint)
+        paint.xfermode = null // Reset for future draws
     }
 }
