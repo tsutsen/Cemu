@@ -108,10 +108,6 @@ class BarOverlayView(
         val localBitmap = bitmap
         if (localBitmap == null) return
 
-        // Draw the bitmap stretched to fill the entire view
-        val destRect = android.graphics.RectF(0f, 0f, width.toFloat(), height.toFloat())
-        canvas.drawBitmap(localBitmap, null, destRect, null)
-        
         // Calculate hole size based on aspect ratio difference
         // The game content is 16:9, fit it to full width of the screen
         val gameAspectRatio = 16f / 9f
@@ -119,18 +115,17 @@ class BarOverlayView(
         val totalBarHeight = height - gameHeightAtFullWidth
         val barHeight = totalBarHeight / 2 // Top and bottom bars
         
-        // Cut a rectangular hole in the middle to see gamepad content underneath
-        // Shrink by 1 pixel on top and bottom only to avoid thin black lines from anti-aliasing
-        val holeLeft = 0
-        val holeTop = barHeight + 1
-        val holeRight = width
-        val holeBottom = height - barHeight - 1
-        
-        // Use PorterDuffXfermode to cut the hole
-        val paint = android.graphics.Paint().apply {
-            xfermode = android.graphics.PorterDuffXfermode(android.graphics.PorterDuff.Mode.CLEAR)
+        // Draw only the top and bottom bar portions (avoid drawing the middle area)
+        // Top bar
+        if (barHeight > 0) {
+            val topSrcRect = android.graphics.Rect(0, 0, localBitmap.width, (barHeight.toFloat() / height * localBitmap.height).toInt())
+            val topDestRect = android.graphics.RectF(0f, 0f, width.toFloat(), barHeight.toFloat())
+            canvas.drawBitmap(localBitmap, topSrcRect, topDestRect, null)
+            
+            // Bottom bar
+            val bottomSrcRect = android.graphics.Rect(0, localBitmap.height - (barHeight.toFloat() / height * localBitmap.height).toInt(), localBitmap.width, localBitmap.height)
+            val bottomDestRect = android.graphics.RectF(0f, height.toFloat() - barHeight.toFloat(), width.toFloat(), height.toFloat())
+            canvas.drawBitmap(localBitmap, bottomSrcRect, bottomDestRect, null)
         }
-        canvas.drawRect(holeLeft.toFloat(), holeTop.toFloat(), holeRight.toFloat(), holeBottom.toFloat(), paint)
-        paint.xfermode = null // Reset for future draws
     }
 }
