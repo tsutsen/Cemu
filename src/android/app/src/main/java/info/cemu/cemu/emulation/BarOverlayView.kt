@@ -24,7 +24,8 @@ class BarOverlayView(
     private var imagePath: String? = null
 
     init {
-        visibility = GONE
+        // Initialize with the provided settings
+        setSettings(settings)
     }
 
     fun setSettings(newSettings: BarOverlaySettings) {
