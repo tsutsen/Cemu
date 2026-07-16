@@ -471,13 +471,6 @@ private fun EmulationSideMenuContent(
         }
     }
 
-    FloatSliderItem(
-        label = tr("Bottom bar alpha"),
-        value = barOverlaySettings.bottomBarImageAlpha,
-        onValueChange = { updateBarOverlaySettings(barOverlaySettings.copy(bottomBarImageAlpha = it)) },
-        valueLabel = { "%.0f%%".format(it * 100) },
-    )
-
     TextButtonItem(
         label = tr("Exit"),
         onClick = onQuit,

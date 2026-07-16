@@ -28,7 +28,7 @@ class BarOverlayView(
     }
 
     fun setSettings(newSettings: BarOverlaySettings) {
-        Log.d(TAG, "*** BarOverlayView.setSettings CALLED *** enabled=${newSettings.isBarOverlayEnabled}, path=${newSettings.bottomBarImagePath}, alpha=${newSettings.bottomBarImageAlpha}")
+        Log.d(TAG, "*** BarOverlayView.setSettings CALLED *** enabled=${newSettings.isBarOverlayEnabled}, path=${newSettings.bottomBarImagePath}")
         settings = newSettings
         if (!settings.isBarOverlayEnabled) {
             visibility = GONE
