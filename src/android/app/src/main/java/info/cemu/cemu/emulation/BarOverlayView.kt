@@ -108,9 +108,10 @@ class BarOverlayView(
         Log.d(TAG, "onDraw: visibility=$visibility, bitmap=${localBitmap != null}, viewSize=${width}x${height}")
         if (localBitmap == null) return
 
-        // Draw the full bitmap first
-        Log.d(TAG, "onDraw: drawing bitmap, bitmapSize=${localBitmap.width}x${localBitmap.height}")
-        canvas.drawBitmap(localBitmap, 0f, 0f, null)
+        // Draw the bitmap stretched to fill the entire view
+        val destRect = android.graphics.RectF(0f, 0f, width.toFloat(), height.toFloat())
+        Log.d(TAG, "onDraw: drawing bitmap stretched to ${width}x${height}")
+        canvas.drawBitmap(localBitmap, null, destRect, null)
         
         // Calculate hole size based on aspect ratio difference
         // The game content is 16:9, fit it to full width of the screen
