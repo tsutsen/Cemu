@@ -3,12 +3,9 @@ package info.cemu.cemu.emulation
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.Canvas
-import android.util.Log
 import android.view.View
 import info.cemu.cemu.common.settings.BarOverlaySettings
 import info.cemu.cemu.common.util.BitmapLoader
-
-private const val TAG = "BarOverlayView"
 
 /**
  * A View that renders a bar overlay image on top of the game screen.
@@ -29,20 +26,16 @@ class BarOverlayView(
     }
 
     fun setSettings(newSettings: BarOverlaySettings) {
-        Log.d(TAG, "*** BarOverlayView.setSettings CALLED *** enabled=${newSettings.isBarOverlayEnabled}, path=${newSettings.bottomBarImagePath}")
         settings = newSettings
         if (!settings.isBarOverlayEnabled) {
             visibility = GONE
-            Log.d(TAG, "setSettings: disabled, hiding view")
             return
         }
 
         visibility = VISIBLE
-        Log.d(TAG, "setSettings: enabled, showing view")
 
         // Load the bottom bar image
         val newPath = settings.bottomBarImagePath
-        Log.d(TAG, "setSettings: newPath=$newPath, imagePath=$imagePath")
         if (newPath != imagePath) {
             imagePath = newPath
             bitmap = loadBitmap(newPath)
