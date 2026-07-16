@@ -118,15 +118,17 @@ class BarOverlayView(
         val barHeight = totalBarHeight / 2 // Top and bottom bars
         
         // Draw only the top and bottom bar portions (avoid drawing the middle area)
-        // Top bar
-        if (barHeight > 0) {
-            val topSrcRect = android.graphics.Rect(0, 0, localBitmap.width, (barHeight.toFloat() / height * localBitmap.height).toInt())
-            val topDestRect = android.graphics.RectF(0f, 0f, width.toFloat(), barHeight.toFloat())
+        // Shrink by 1px on top/bottom edges to avoid thin black lines from anti-aliasing
+        if (barHeight > 1) {
+            val shrink = 1
+            // Top bar (draw from y=0 to y=barHeight-shrink)
+            val topSrcRect = android.graphics.Rect(0, 0, localBitmap.width, ((barHeight - shrink).toFloat() / height * localBitmap.height).toInt())
+            val topDestRect = android.graphics.RectF(0f, 0f, width.toFloat(), (barHeight - shrink).toFloat())
             canvas.drawBitmap(localBitmap, topSrcRect, topDestRect, null)
             
-            // Bottom bar
-            val bottomSrcRect = android.graphics.Rect(0, localBitmap.height - (barHeight.toFloat() / height * localBitmap.height).toInt(), localBitmap.width, localBitmap.height)
-            val bottomDestRect = android.graphics.RectF(0f, height.toFloat() - barHeight.toFloat(), width.toFloat(), height.toFloat())
+            // Bottom bar (draw from y=height-barHeight+shrink to y=height)
+            val bottomSrcRect = android.graphics.Rect(0, localBitmap.height - ((barHeight - shrink).toFloat() / height * localBitmap.height).toInt(), localBitmap.width, localBitmap.height)
+            val bottomDestRect = android.graphics.RectF(0f, height.toFloat() - (barHeight - shrink).toFloat(), width.toFloat(), height.toFloat())
             canvas.drawBitmap(localBitmap, bottomSrcRect, bottomDestRect, null)
         }
     }
