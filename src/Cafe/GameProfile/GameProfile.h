@@ -88,6 +88,7 @@ public:
 	uint64_t m_title_id = 0;
 	bool m_is_loaded = false;
 	bool m_is_default = true;
+	std::string m_profile_path; // Path where the profile was loaded from
 
 	std::optional<std::string> m_gameName{};
 

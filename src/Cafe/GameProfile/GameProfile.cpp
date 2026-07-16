@@ -193,6 +193,8 @@ bool GameProfile::Load(uint64_t title_id)
 	}
 	else
 		m_is_default = false;
+	
+	m_profile_path = _pathToUtf8(gameProfilePath);
 
 	m_is_loaded = true;
 	// most official gameprofiles start with "# gamename"
@@ -308,10 +310,16 @@ bool GameProfile::Load(uint64_t title_id)
 
 void GameProfile::Save(uint64_t title_id)
 {
-	auto gameProfileDir = ActiveSettings::GetConfigPath("gameProfiles");
+	// Use the same path where the profile was loaded from
+	std::string gameProfilePath = m_profile_path.empty() 
+		? _pathToUtf8(ActiveSettings::GetConfigPath("gameProfiles/{:016x}.ini", title_id))
+		: m_profile_path;
+	
+	// Ensure the directory exists
+	auto gameProfileDir = fs::path(gameProfilePath).parent_path();
 	if (std::error_code ex_ec; !fs::exists(gameProfileDir, ex_ec))
 		fs::create_directories(gameProfileDir, ex_ec);
-	auto gameProfilePath = gameProfileDir / fmt::format("{:016x}.ini", title_id);
+	
 	FileStream* fs = FileStream::createFile2(gameProfilePath);
 	if (!fs)
 	{
