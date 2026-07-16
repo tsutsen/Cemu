@@ -428,16 +428,8 @@ private fun EmulationSideMenuContent(
     )
 
     // Bar overlay section
-    Text(
-        text = tr("Bar Overlay"),
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 8.dp, vertical = 8.dp),
-        fontSize = 18.sp,
-    )
-
     CheckboxItem(
-        label = tr("Enable bar overlay (bottom screen)"),
+        label = tr("PAD bar overlay"),
         checked = barOverlaySettings.isBarOverlayEnabled,
         onCheckedChange = { updateBarOverlaySettings(barOverlaySettings.copy(isBarOverlayEnabled = it)) },
     )
