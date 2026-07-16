@@ -78,12 +78,21 @@ class BarOverlayView(
         Log.d(TAG, "onDraw: drawing bitmap, bitmapSize=${localBitmap.width}x${localBitmap.height}")
         canvas.drawBitmap(localBitmap, 0f, 0f, null)
         
+        // Calculate hole size based on aspect ratio difference
+        // The game content is 16:9, fit it to full width of the screen
+        val gameAspectRatio = 16f / 9f
+        val gameHeightAtFullWidth = (width / gameAspectRatio).toInt()
+        val totalBarHeight = height - gameHeightAtFullWidth
+        val barHeight = totalBarHeight / 2 // Top and bottom bars
+        
+        Log.d(TAG, "onDraw: screen=${width}x${height}, gameHeightAtFullWidth=$gameHeightAtFullWidth, barHeight=$barHeight")
+        
         // Cut a rectangular hole in the middle to see gamepad content underneath
-        val holePadding = 0.2f // 20% padding from edges
-        val holeLeft = (width * holePadding).toInt()
-        val holeTop = (height * holePadding).toInt()
-        val holeRight = (width * (1f - holePadding)).toInt()
-        val holeBottom = (height * (1f - holePadding)).toInt()
+        // Shrink by 1 pixel on each side to avoid thin black lines from anti-aliasing
+        val holeLeft = 1
+        val holeTop = barHeight + 1
+        val holeRight = width - 1
+        val holeBottom = height - barHeight - 1
         
         Log.d(TAG, "onDraw: cutting hole at ($holeLeft,$holeTop)-($holeRight,$holeBottom)")
         
